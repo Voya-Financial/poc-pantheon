@@ -71,6 +71,20 @@ jobs:
       - name: Authenticate Terminus
         run: terminus auth:login --machine-token="$TERMINUS_TOKEN"
       ###########################################################################################################################
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PANTHEON_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      - name: Start SSH agent and add key
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add ~/.ssh/id_rsa
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      ###########################################################################################################################
       - name: 'Push code to Pantheon'
         env:
           ENV_ID: intg
@@ -98,6 +112,7 @@ jobs:
             git clone --branch $ENV_ID --depth 2 $git_url .
 
             SITE_GIT_URL=$(terminus connection:info $SITE_ID.$ENV_ID --field=git_url)
+            SITE_GIT_HOST=$(terminus connection:info $SITE_ID.$ENV_ID --field=git_host)
             mkdir $RUNNER_TEMP/$SITE_ID
             cd $RUNNER_TEMP/$SITE_ID
 
@@ -127,6 +142,7 @@ jobs:
             git add -A
             git commit -m "$COMMIT_MSG" --quiet --allow-empty
 
+            ssh-keyscan -H $SITE_GIT_HOST >> ~/.ssh/known_hosts
             echo "Pushing artifact to Pantheon $ENV_ID"
             git push pantheon $BRANCH -vv
           }
