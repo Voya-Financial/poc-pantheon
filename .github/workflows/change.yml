@@ -3,6 +3,7 @@ name: Create random file
 on:
   schedule:
     - cron: '*/59 * * * *'
+  workflow_dispatch:
 
 jobs:
   create-file:
