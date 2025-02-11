@@ -26,7 +26,7 @@ jobs:
         chmod +x ~/terminus/terminus
         sudo ln -s ~/terminus/terminus /usr/local/bin/terminus
     - name: Authenticate Terminus
-      run: terminus auth:login --machine-token "$TERMINUS_TOKEN"
+      run: terminus auth:login --machine-token="$TERMINUS_TOKEN"
     - name: 'Get list of Pantheon sites for the upstream'
       run: |
         if [[ -z $SITE_ID ]]; then
