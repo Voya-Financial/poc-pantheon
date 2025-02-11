@@ -11,6 +11,7 @@ env:
 
 jobs:
   matrix:
+    name: 'Build site matrix'
     runs-on: ubuntu-latest
     outputs:
       SITE_MATRIX: ${{ steps.save_matrix.outputs.site_matrix }}
