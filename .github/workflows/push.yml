@@ -112,7 +112,9 @@ jobs:
             git clone --branch $ENV_ID --depth 2 $git_url .
 
             SITE_GIT_URL=$(terminus connection:info $SITE_ID.$ENV_ID --field=git_url)
+            # Custom hostkey verify here...
             SITE_GIT_HOST=$(terminus connection:info $SITE_ID.$ENV_ID --field=git_host)
+            ssh-keyscan -H $SITE_GIT_HOST >> ~/.ssh/known_hosts
             mkdir $RUNNER_TEMP/$SITE_ID
             cd $RUNNER_TEMP/$SITE_ID
 
@@ -142,7 +144,6 @@ jobs:
             git add -A
             git commit -m "$COMMIT_MSG" --quiet --allow-empty
 
-            ssh-keyscan -H $SITE_GIT_HOST >> ~/.ssh/known_hosts
             echo "Pushing artifact to Pantheon $ENV_ID"
             git push pantheon $BRANCH -vv
           }
