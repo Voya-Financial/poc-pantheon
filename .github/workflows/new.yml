@@ -4,7 +4,7 @@ on:
     inputs:
       number:
         type: string
-        description: 'Site increment #.'
+        description: 'Site identifier #.'
 
 env:
   TERMINUS_TOKEN: ${{ secrets.TERMINUS_TOKEN }}
