@@ -1,0 +1,49 @@
+name: 'New site.'
+on:
+  workflow_dispatch:
+    inputs:
+      site_id:
+        type: string
+        description: 'Short ID for site.'
+      site_name:
+        type: string
+        description: 'Human readable name of site. Will display on the Pantheon dashboard.'
+
+env:
+  TERMINUS_TOKEN: ${{ secrets.TERMINUS_TOKEN }}
+  PANTHEON_UPSTREAM_ID: 'c24dfe83-5182-4fd6-ade3-94884a2c8426'
+  PANTHEON_ORG_ID: '06746d4c-53c3-4651-99bf-e2614ca75476'
+
+jobs:
+  create_site:
+    name: 'Create new POC site on Pantheon'
+    runs-on: ubuntu-latest
+    env:
+      SITE_ID: ${{ inputs.site_id }}
+      SITE_NAME: ${{ inputs.site_name }}
+    steps:
+      ################################ REPEATED CODE ############################################################################
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: Install Terminus
+        run: |
+          mkdir -p ~/terminus
+          curl -L https://github.com/pantheon-systems/terminus/releases/download/$(curl -s https://api.github.com/repos/pantheon-systems/terminus/releases/latest | grep tag_name | cut -d '"' -f 4)/terminus.phar -o ~/terminus/terminus
+          chmod +x ~/terminus/terminus
+          sudo ln -s ~/terminus/terminus /usr/local/bin/terminus
+      - name: Authenticate Terminus
+        run: terminus auth:login --machine-token="$TERMINUS_TOKEN"
+      ###########################################################################################################################
+
+      - run: |
+          terminus site:create --org $PANTHEON_ORG_ID --region US -- $SITE_ID "$SITE_NAME" $PANTHEON_UPSTREAM_ID
+          terminus tag:add $SITE_ID $PANTHEON_ORG_ID "poc"
+          terminus multidev:create --no-db --no-files -- $SITE_ID.dev intg
+
+          # Install the INTG environment. This ensures auto-deploys work as designed.
+          terminus drush $SITE_ID.intg -- site:install demo_umami -n
+          terminus drush $SITE_ID.intg -- cr
+
+          echo "### Your new site is ready!! :rocket:" >> $GITHUB_STEP_SUMMARY
