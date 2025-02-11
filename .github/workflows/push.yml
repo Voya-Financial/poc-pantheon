@@ -48,7 +48,7 @@ jobs:
     needs:
       - matrix
     strategy:
-      matrix: ${{ fromJson(needs.matrix.outputs.sites) }}
+      matrix: ${{ fromJson(needs.matrix.outputs.SITE_MATRIX) }}
       # Ensure all jobs get a chance to run.
       fail-fast: false
     steps:
