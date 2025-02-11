@@ -1,4 +1,4 @@
-name: Create random file
+name: Create random file.
 
 on:
   schedule:
