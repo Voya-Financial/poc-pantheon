@@ -15,33 +15,35 @@ jobs:
     outputs:
       SITE_MATRIX: ${{ steps.save_matrix.outputs.site_matrix }}
     steps:
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.3'
-    - name: Install Terminus
-      run: |
-        mkdir -p ~/terminus
-        curl -L https://github.com/pantheon-systems/terminus/releases/download/$(curl -s https://api.github.com/repos/pantheon-systems/terminus/releases/latest | grep tag_name | cut -d '"' -f 4)/terminus.phar -o ~/terminus/terminus
-        chmod +x ~/terminus/terminus
-        sudo ln -s ~/terminus/terminus /usr/local/bin/terminus
-    - name: Authenticate Terminus
-      run: terminus auth:login --machine-token="$TERMINUS_TOKEN"
-    - name: 'Get list of Pantheon sites for the upstream'
-      run: |
-        if [[ -z $SITE_ID ]]; then
-          echo SITES="$(terminus org:site:list --upstream $PANTHEON_UPSTREAM_ID --field name -- $PANTHEON_ORG_ID | tr "\n" ",")" >> $GITHUB_ENV
-        else
-          echo SITES="$(terminus org:site:list --upstream $PANTHEON_UPSTREAM_ID --field name --filter='name='$SITE_ID -- $PANTHEON_ORG_ID | tr "\n" ",")" >> $GITHUB_ENV
-        fi
-    - name: 'Save site list to matrix output'
-      id: save_matrix
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const sites = `${{ env.SITES }}`;
-          const siteList = sites.includes(",") ? sites.split(",").filter(site => site).map(site => `"${site}"`).join(","): `"${sites}"`;
-          core.setOutput("site_matrix", `{"site": [${siteList}]}`);
+      ################################ REPEATED CODE ############################################################################
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: Install Terminus
+        run: |
+          mkdir -p ~/terminus
+          curl -L https://github.com/pantheon-systems/terminus/releases/download/$(curl -s https://api.github.com/repos/pantheon-systems/terminus/releases/latest | grep tag_name | cut -d '"' -f 4)/terminus.phar -o ~/terminus/terminus
+          chmod +x ~/terminus/terminus
+          sudo ln -s ~/terminus/terminus /usr/local/bin/terminus
+      - name: Authenticate Terminus
+        run: terminus auth:login --machine-token="$TERMINUS_TOKEN"
+      ###########################################################################################################################
+      - name: 'Get list of Pantheon sites for the upstream'
+        run: |
+          if [[ -z $SITE_ID ]]; then
+            echo SITES="$(terminus org:site:list --upstream $PANTHEON_UPSTREAM_ID --field name -- $PANTHEON_ORG_ID | tr "\n" ",")" >> $GITHUB_ENV
+          else
+            echo SITES="$(terminus org:site:list --upstream $PANTHEON_UPSTREAM_ID --field name --filter='name='$SITE_ID -- $PANTHEON_ORG_ID | tr "\n" ",")" >> $GITHUB_ENV
+          fi
+      - name: 'Save site list to matrix output'
+        id: save_matrix
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const sites = `${{ env.SITES }}`;
+            const siteList = sites.includes(",") ? sites.split(",").filter(site => site).map(site => `"${site}"`).join(","): `"${sites}"`;
+            core.setOutput("site_matrix", `{"site": [${siteList}]}`);
   deploy:
     name: 'Deploy'
     runs-on: ubuntu-latest
@@ -51,5 +53,118 @@ jobs:
       matrix: ${{ fromJson(needs.matrix.outputs.SITE_MATRIX) }}
       # Ensure all jobs get a chance to run.
       fail-fast: false
+    env:
+      SITE_ID: ${{ matrix.site }}
     steps:
       - uses: actions/checkout@v4
+      ################################ REPEATED CODE ############################################################################
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: Install Terminus
+        run: |
+          mkdir -p ~/terminus
+          curl -L https://github.com/pantheon-systems/terminus/releases/download/$(curl -s https://api.github.com/repos/pantheon-systems/terminus/releases/latest | grep tag_name | cut -d '"' -f 4)/terminus.phar -o ~/terminus/terminus
+          chmod +x ~/terminus/terminus
+          sudo ln -s ~/terminus/terminus /usr/local/bin/terminus
+      - name: Authenticate Terminus
+        run: terminus auth:login --machine-token="$TERMINUS_TOKEN"
+      ###########################################################################################################################
+      - name: 'Push code to Pantheon'
+        env:
+          ENV_ID: intg
+        shell: bash
+        run: |
+          # Show commands run in output.
+          set -x
+          # Let's reset the cache to avoid DNS problems.
+          systemctl is-active --quiet systemd-resolved || systemctl start systemd-resolved && resolvectl flush-caches
+
+          # Early exit?
+          if [[ -n $SITE_ID ]] && [[ -z $(terminus env:list $SITE_ID --field=id --filter='id='$ENV_ID) ]]; then
+            echo "::warning::Skipping $SITE_ID, no environment named $ENV_ID..."
+            exit 0;
+          fi
+
+          function push_code {
+            BRANCH=$ENV_ID
+            COMMIT_MSG="Automated commit (latest $GITHUB_REF_NAME) by Github for build $GITHUB_RUN_ID."
+
+            # Clone the artifact.
+            mkdir $RUNNER_TEMP/upstream
+            cd $RUNNER_TEMP/upstream
+            git_url="https://github.com/Voya-Financial/poc-pantheon.git"
+            git clone --branch $ENV_ID --depth 2 $git_url .
+
+            SITE_GIT_URL=$(terminus connection:info $SITE_ID.$ENV_ID --field=git_url)
+            mkdir $RUNNER_TEMP/$SITE_ID
+            cd $RUNNER_TEMP/$SITE_ID
+
+            # Initialize git.
+            git init --quiet
+            git config --local user.name "Github Actions CI"
+            git config --local user.email "DL-DrupalCI@voya.com"
+            # @todo Below 2 directives needed?
+            git config --local core.excludesfile false
+            git config --local core.fileMode true
+
+            git remote add pantheon $SITE_GIT_URL
+            git checkout -b $BRANCH
+            # If the branch exists, merge it.
+            # NOTE: This is a fuzzy match. So "master" matches "master" and "test/master".
+            if git ls-remote pantheon $ENV_ID | wc -l > /dev/null; then
+              echo 'Pulling existing branch...'
+              GIT_SSH_COMMAND="ssh -vvv" git fetch pantheon $BRANCH --depth=1 -vv
+              git merge pantheon/$BRANCH -vv
+            fi
+
+            # Rsync files from the artifact, delete any files not present in the artifact, but dont send .git/ or .github/ folders, and protect the destination .git/ folder.
+            rsync -a --no-g --delete --delete-excluded --exclude='.git/' --exclude='.github/' --filter 'protect /.git/' $RUNNER_TEMP/upstream/ ./
+
+            # This is what BLT DeployCommand is doing.
+            git rm -r --cached --ignore-unmatch --quiet .
+            git add -A
+            git commit -m "$COMMIT_MSG" --quiet --allow-empty
+
+            echo "Pushing artifact to Pantheon $ENV_ID"
+            git push pantheon $BRANCH -vv
+          }
+
+          function pull_code {
+            if [[ "$ENV_ID" =~ ^(dev|sync)$ ]]; then
+              # Pull code updates from custom upstream master branch.
+              terminus upstream:updates:apply --accept-upstream --yes -- $SITE_ID.$ENV_ID
+            elif [[ "$ENV_ID" =~ ^(test|live)$ ]]; then
+              terminus env:deploy --yes -- $SITE_ID.$ENV_ID
+            else
+              echo "::warning::Function pull_code called, but for an invalid environment..."
+            fi
+          }
+
+          function code_update {
+            # Wait while code gets deployed to Pantheon servers.
+            terminus workflow:wait $SITE_ID.$ENV_ID -vvv
+            # Testing additional wait...
+            sleep 30
+
+            terminus drush $SITE_ID.$ENV_ID -- updatedb -n -vvv
+            terminus drush $SITE_ID.$ENV_ID -- cache:rebuild -vvv
+          }
+
+          # Wake the environment up, if it's needed...
+          terminus env:wake $SITE_ID.$ENV_ID -vvv
+
+          # @todo This currently doesn't work, but we need to wait for it.
+          # Only wait 20 seconds max for the environment to wake up.
+          terminus workflow:wait --max=20 $SITE_ID.$ENV_ID -vvv
+
+          if [[ "$ENV_ID" =~ ^(dev|test|live|sync)$ ]]; then
+            # Pantheon pipeline. Expects custom upstream `master` is up to date.
+            pull_code
+          else
+            # Multidev. Must push code.
+            push_code
+          fi
+
+          code_update
