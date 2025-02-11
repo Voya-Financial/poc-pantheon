@@ -84,10 +84,6 @@ jobs:
           ssh-add ~/.ssh/id_rsa
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-
-      - name: SSH Keyscan
-        run: |
-          ssh -Tv codeserver.dev.a61b5753-55c5-459e-914d-66786b053c6e.drush.in
       ###########################################################################################################################
       - name: 'Push code to Pantheon'
         env:
@@ -119,7 +115,7 @@ jobs:
             SITE_GIT_URL=$(terminus connection:info $SITE_ID.$ENV_ID --field=git_url)
             # Custom hostkey verify here...
             SITE_GIT_HOST=$(terminus connection:info $SITE_ID.$ENV_ID --field=git_host)
-            ssh-keyscan -vv -H $SITE_GIT_HOST >> ~/.ssh/known_hosts
+            ssh-keyscan -p 2222 -H $SITE_GIT_HOST >> ~/.ssh/known_hosts
             mkdir $RUNNER_TEMP/$SITE_ID
             cd $RUNNER_TEMP/$SITE_ID
 
