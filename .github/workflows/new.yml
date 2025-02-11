@@ -49,7 +49,7 @@ jobs:
       ###########################################################################################################################
       - run: |
           terminus site:create --org $PANTHEON_ORG_ID --region US -- $SITE_ID "$SITE_NAME" $PANTHEON_UPSTREAM_ID
-          terminus tag:add $SITE_ID $PANTHEON_ORG_ID "poc"
+          terminus tag:add $SITE_ID $PANTHEON_ORG_ID "ghpoc"
           terminus multidev:create --no-db --no-files -- $SITE_ID.dev intg
 
           # Install the INTG environment. This ensures auto-deploys work as designed.
