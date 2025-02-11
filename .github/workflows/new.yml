@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SITE_ID: 'poc-ghcom-site${{ inputs.number }}'
-      SITE_NAME: 'POC-GHcom-Site${{ inputs.site_name }}'
+      SITE_NAME: 'POC-GHcom-Site${{ inputs.number }}'
     steps:
       ################################ REPEATED CODE ############################################################################
       - name: Setup PHP
