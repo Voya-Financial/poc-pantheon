@@ -33,7 +33,20 @@ jobs:
       - name: Authenticate Terminus
         run: terminus auth:login --machine-token="$TERMINUS_TOKEN"
       ###########################################################################################################################
-
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PANTHEON_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      - name: Start SSH agent and add key
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add ~/.ssh/id_rsa
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      ###########################################################################################################################
       - run: |
           terminus site:create --org $PANTHEON_ORG_ID --region US -- $SITE_ID "$SITE_NAME" $PANTHEON_UPSTREAM_ID
           terminus tag:add $SITE_ID $PANTHEON_ORG_ID "poc"
