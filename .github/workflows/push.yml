@@ -84,6 +84,14 @@ jobs:
           ssh-add ~/.ssh/id_rsa
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      - name: Test network connectivity
+        run: |
+          ping -c 4 codeserver.dev.a61b5753-55c5-459e-914d-66786b053c6e.drush.in
+          curl -v codeserver.dev.a61b5753-55c5-459e-914d-66786b053c6e.drush.in
+
+      - name: SSH Keyscan
+        run: |
+          ssh-keyscan -vv -H codeserver.dev.a61b5753-55c5-459e-914d-66786b053c6e.drush.in >> ~/.ssh/known_hosts
       ###########################################################################################################################
       - name: 'Push code to Pantheon'
         env:
