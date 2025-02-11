@@ -4,10 +4,52 @@ on:
     branches:
       - 'intg'
 
-jobs:
-  push-update:
-    runs-on: ubuntu-latest
+env:
+  TERMINUS_TOKEN: {{ secrets.TERMINUS_TOKEN }}
+  PANTHEON_UPSTREAM_ID: 'c24dfe83-5182-4fd6-ade3-94884a2c8426'
+  PANTHEON_ORG_ID: '06746d4c-53c3-4651-99bf-e2614ca75476'
 
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      SITE_MATRIX: ${{ steps.save_matrix.outputs.site_matrix }}
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+    - name: Install Terminus
+      run: |
+        mkdir -p ~/terminus
+        curl -L https://github.com/pantheon-systems/terminus/releases/download/$(curl -s https://api.github.com/repos/pantheon-systems/terminus/releases/latest | grep tag_name | cut -d '"' -f 4)/terminus.phar -o ~/terminus/terminus
+        chmod +x ~/terminus/terminus
+        sudo ln -s ~/terminus/terminus /usr/local/bin/terminus
+    - name: Authenticate Terminus
+      run: terminus auth:login --machine-token $TERMINUS_TOKEN
+    - name: 'Get list of Pantheon sites for the upstream'
+      run: |
+        if [[ -z $SITE_ID ]]; then
+          echo SITES="$(terminus org:site:list --upstream $PANTHEON_UPSTREAM_ID --field name -- $PANTHEON_ORG_ID | tr "\n" ",")" >> $GITHUB_ENV
+        else
+          echo SITES="$(terminus org:site:list --upstream $PANTHEON_UPSTREAM_ID --field name --filter='name='$SITE_ID -- $PANTHEON_ORG_ID | tr "\n" ",")" >> $GITHUB_ENV
+        fi
+    - name: 'Save site list to matrix output'
+      id: save_matrix
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const sites = `${{ env.SITES }}`;
+          const siteList = sites.includes(",") ? sites.split(",").filter(site => site).map(site => `"${site}"`).join(","): `"${sites}"`;
+          core.setOutput("site_matrix", `{"site": [${siteList}]}`);
+  deploy:
+    name: 'Deploy'
+    runs-on: ubuntu-latest
+    needs:
+      - matrix
+    strategy:
+      matrix: ${{ fromJson(needs.matrix.outputs.sites) }}
+      # Ensure all jobs get a chance to run.
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
