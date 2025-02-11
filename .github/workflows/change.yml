@@ -5,6 +5,9 @@ on:
     - cron: '*/59 * * * *'
   workflow_dispatch:
 
+env:
+  GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+
 jobs:
   create-file:
     runs-on: ubuntu-latest
@@ -15,14 +18,13 @@ jobs:
       with:
         ref: intg
 
+    - run: git remote -v
     - name: Generate random file
       run: |
         mkdir -p contents
         echo $RANDOM > contents/random_file_$(date +%s).txt
 
     - name: Commit and push changes
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: |
         git config --global user.name 'dpagini'
         git config --global user.email 'david.pagini@voya.com'
