@@ -5,3 +5,6 @@ database:
   version: 10.6
 search:
   version: 8
+# Dummy commit to force PHP update.
+protected_web_paths:
+  - /example.txt
