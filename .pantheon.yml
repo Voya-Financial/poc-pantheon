@@ -1,6 +1,5 @@
 api_version: 1
 php_version: 8.3
-web_docroot: true
 enforce_https: full
 database:
   version: 10.6
