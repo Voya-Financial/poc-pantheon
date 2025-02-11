@@ -1,0 +1,30 @@
+name: Create random file
+
+on:
+  schedule:
+    - cron: '*/59 * * * *'
+
+jobs:
+  create-file:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: intg
+
+    - name: Generate random file
+      run: |
+        mkdir -p contents
+        echo $RANDOM > contents/random_file_$(date +%s).txt
+
+    - name: Commit and push changes
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add contents/
+        git commit -m "Adds a random file"
+        git push origin intg
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
