@@ -114,7 +114,7 @@ jobs:
             SITE_GIT_URL=$(terminus connection:info $SITE_ID.$ENV_ID --field=git_url)
             # Custom hostkey verify here...
             SITE_GIT_HOST=$(terminus connection:info $SITE_ID.$ENV_ID --field=git_host)
-            ssh-keyscan -H $SITE_GIT_HOST >> ~/.ssh/known_hosts
+            ssh-keyscan -vv -H $SITE_GIT_HOST >> ~/.ssh/known_hosts
             mkdir $RUNNER_TEMP/$SITE_ID
             cd $RUNNER_TEMP/$SITE_ID
 
