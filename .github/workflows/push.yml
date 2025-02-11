@@ -87,7 +87,7 @@ jobs:
 
       - name: SSH Keyscan
         run: |
-          ssh-keyscan -vvv -H codeserver.dev.a61b5753-55c5-459e-914d-66786b053c6e.drush.in >> ~/.ssh/known_hosts
+          ssh -Tv codeserver.dev.a61b5753-55c5-459e-914d-66786b053c6e.drush.in
       ###########################################################################################################################
       - name: 'Push code to Pantheon'
         env:
