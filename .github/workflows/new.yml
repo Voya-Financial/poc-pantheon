@@ -1,13 +1,10 @@
-name: 'New site.'
+name: 'Create a new POC site.'
 on:
   workflow_dispatch:
     inputs:
-      site_id:
+      number:
         type: string
-        description: 'Short ID for site.'
-      site_name:
-        type: string
-        description: 'Human readable name of site. Will display on the Pantheon dashboard.'
+        description: 'Site increment #.'
 
 env:
   TERMINUS_TOKEN: ${{ secrets.TERMINUS_TOKEN }}
@@ -19,8 +16,8 @@ jobs:
     name: 'Create new POC site on Pantheon'
     runs-on: ubuntu-latest
     env:
-      SITE_ID: ${{ inputs.site_id }}
-      SITE_NAME: ${{ inputs.site_name }}
+      SITE_ID: 'poc-ghcom-site${{ inputs.number }}'
+      SITE_NAME: 'POC-GHcom-Site${{ inputs.site_name }}'
     steps:
       ################################ REPEATED CODE ############################################################################
       - name: Setup PHP

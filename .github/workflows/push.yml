@@ -1,4 +1,4 @@
-name: 'Mimic CI job.'
+name: 'Deploy the INTG branch.'
 on:
   push:
     branches:
