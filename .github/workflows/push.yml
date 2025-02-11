@@ -1,4 +1,4 @@
-name: 'Mimic CI job'
+name: 'Mimic CI job.'
 on:
   push:
     branches:

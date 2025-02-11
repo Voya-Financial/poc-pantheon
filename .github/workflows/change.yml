@@ -21,11 +21,11 @@ jobs:
         echo $RANDOM > contents/random_file_$(date +%s).txt
 
     - name: Commit and push changes
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
       run: |
-        git config --global user.name 'github-actions[bot]'
-        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git config --global user.name 'dpagini'
+        git config --global user.email 'david.pagini@voya.com'
         git add contents/
         git commit -m "Automate adding a random file."
         git push origin intg
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
