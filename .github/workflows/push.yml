@@ -22,13 +22,9 @@ jobs:
         with:
           php-version: '8.3'
       - name: Install Terminus
-        run: |
-          mkdir -p ~/terminus
-          curl -L https://github.com/pantheon-systems/terminus/releases/download/$(curl -s https://api.github.com/repos/pantheon-systems/terminus/releases/latest | grep tag_name | cut -d '"' -f 4)/terminus.phar -o ~/terminus/terminus
-          chmod +x ~/terminus/terminus
-          sudo ln -s ~/terminus/terminus /usr/local/bin/terminus
-      - name: Authenticate Terminus
-        run: terminus auth:login --machine-token="$TERMINUS_TOKEN"
+        uses: pantheon-systems/terminus-github-actions@v1
+        with:
+          pantheon-machine-token: ${{ TERMINUS_TOKEN }}
       ###########################################################################################################################
       - name: 'Get list of Pantheon sites for the upstream'
         run: |
