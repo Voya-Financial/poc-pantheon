@@ -24,7 +24,7 @@ jobs:
       - name: Install Terminus
         uses: pantheon-systems/terminus-github-actions@v1
         with:
-          pantheon-machine-token: ${{ TERMINUS_TOKEN }}
+          pantheon-machine-token: ${{ env.TERMINUS_TOKEN }}
       ###########################################################################################################################
       - name: 'Get list of Pantheon sites for the upstream'
         run: |
@@ -62,7 +62,7 @@ jobs:
       - name: Install Terminus
         uses: pantheon-systems/terminus-github-actions@v1
         with:
-          pantheon-machine-token: ${{ TERMINUS_TOKEN }}
+          pantheon-machine-token: ${{ env.TERMINUS_TOKEN }}
       - name: Authenticate Terminus
         run: terminus auth:login --machine-token="$TERMINUS_TOKEN"
       ###########################################################################################################################
