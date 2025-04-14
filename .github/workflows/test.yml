@@ -40,7 +40,7 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       - name: Known hosts
         run: |
-          ssh-keyscan -p 2222 -H codeserver.dev.c7f7766a-f5d8-43fe-ad0f-93d1779375b7.drush.in >> ~/.ssh/known_hosts
+          ssh-keyscan -p 2222 -H codeserver.dev.c7f7766a-f5d8-43fe-ad0f-93d1779375b7@codeserver.dev.c7f7766a-f5d8-43fe-ad0f-93d1779375b7.drush.in >> ~/.ssh/known_hosts
           ssh-keyscan -H pantheon.voya.com >> ~/.ssh/known_hosts
       - name: Set up SSH config
         run: |
