@@ -1,0 +1,52 @@
+name: 'Debug testing.'
+on:
+  push:
+    branches:
+      - 'intg'
+  workflow_dispatch:
+
+env:
+  TERMINUS_TOKEN: ${{ secrets.TERMINUS_TOKEN }}
+  PANTHEON_UPSTREAM_ID: 'c24dfe83-5182-4fd6-ade3-94884a2c8426'
+  PANTHEON_ORG_ID: '06746d4c-53c3-4651-99bf-e2614ca75476'
+
+jobs:
+  test:
+    name: 'Test'
+    runs-on: ubuntu-latest
+    steps:
+      ################################ REPEATED CODE ############################################################################
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: Install Terminus
+        uses: pantheon-systems/terminus-github-actions@v1
+        with:
+          pantheon-machine-token: ${{ env.TERMINUS_TOKEN }}
+      ###########################################################################################################################
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PANTHEON_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      - name: Start SSH agent and add key
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add ~/.ssh/id_rsa
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      - name: Set up SSH config
+        run: |
+          mkdir -p ~/.ssh
+          echo "Host bastion" >> ~/.ssh/config
+          echo "  AddKeysToAgent yes" >> ~/.ssh/config
+          echo "  Hostname pantheon.voya.com" >> ~/.ssh/config
+          echo "Host *.drush.in" >> ~/.ssh/config
+          echo "  ProxyJump bastion" >> ~/.ssh/config
+      ###########################################################################################################################
+      - name: 'Testing'
+        run: |
+          ssh -v -p 2222 codeserver.dev.c7f7766a-f5d8-43fe-ad0f-93d1779375b7@codeserver.dev.c7f7766a-f5d8-43fe-ad0f-93d1779375b7.drush.in
