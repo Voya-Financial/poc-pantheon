@@ -60,11 +60,9 @@ jobs:
         with:
           php-version: '8.3'
       - name: Install Terminus
-        run: |
-          mkdir -p ~/terminus
-          curl -L https://github.com/pantheon-systems/terminus/releases/download/$(curl -s https://api.github.com/repos/pantheon-systems/terminus/releases/latest | grep tag_name | cut -d '"' -f 4)/terminus.phar -o ~/terminus/terminus
-          chmod +x ~/terminus/terminus
-          sudo ln -s ~/terminus/terminus /usr/local/bin/terminus
+        uses: pantheon-systems/terminus-github-actions@v1
+        with:
+          pantheon-machine-token: ${{ TERMINUS_TOKEN }}
       - name: Authenticate Terminus
         run: terminus auth:login --machine-token="$TERMINUS_TOKEN"
       ###########################################################################################################################
@@ -81,6 +79,14 @@ jobs:
           ssh-add ~/.ssh/id_rsa
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      - name: Set up SSH config
+        run: |
+          mkdir -p ~/.ssh
+          echo "Host bastion" >> ~/.ssh/config
+          echo "  AddKeysToAgent yes" >> ~/.ssh/config
+          echo "  Hostname pantheon.voya.com" >> ~/.ssh/config
+          echo Host *.drush.in" >> ~/.ssh/config
+          echo "  ProxyJump bastion" >> ~/.ssh/config
       ###########################################################################################################################
       - name: 'Push code to Pantheon'
         env:
