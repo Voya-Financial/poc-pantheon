@@ -136,8 +136,8 @@ jobs:
             # NOTE: This is a fuzzy match. So "master" matches "master" and "test/master".
             if git ls-remote pantheon $ENV_ID | wc -l > /dev/null; then
               echo 'Pulling existing branch...'
-              GIT_SSH_COMMAND="ssh -vvv" git fetch pantheon $BRANCH --depth=1 -vv
-              git merge pantheon/$BRANCH -vv
+              GIT_SSH_COMMAND="ssh -vvv" git fetch pantheon $BRANCH --depth=1 -vvv
+              git merge pantheon/$BRANCH -vvv
             fi
 
             # Rsync files from the artifact, delete any files not present in the artifact, but dont send .git/ or .github/ folders, and protect the destination .git/ folder.
@@ -149,7 +149,7 @@ jobs:
             git commit -m "$COMMIT_MSG" --quiet --allow-empty
 
             echo "Pushing artifact to Pantheon $ENV_ID"
-            git push pantheon $BRANCH -vv
+            git push pantheon $BRANCH -vvv
           }
 
           function pull_code {
