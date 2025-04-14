@@ -43,7 +43,8 @@ jobs:
           mkdir -p ~/.ssh
           echo "Host bastion" >> ~/.ssh/config
           echo "  AddKeysToAgent yes" >> ~/.ssh/config
-          echo "  Hostname 34.135.86.149" >> ~/.ssh/config
+          echo "  Hostname pantheon.voya.com" >> ~/.ssh/config
+          echo "  User jkadm" >> ~/.ssh/config
           echo "Host *.drush.in" >> ~/.ssh/config
           echo "  ProxyJump bastion" >> ~/.ssh/config
       ###########################################################################################################################
