@@ -51,4 +51,5 @@ jobs:
       - name: 'Testing'
         run: |
           whoami
+          ssh -vvv jkadm@pantheon.voya.com
           ssh -v -p 2222 codeserver.dev.c7f7766a-f5d8-43fe-ad0f-93d1779375b7@codeserver.dev.c7f7766a-f5d8-43fe-ad0f-93d1779375b7.drush.in
