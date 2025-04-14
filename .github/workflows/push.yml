@@ -63,8 +63,6 @@ jobs:
         uses: pantheon-systems/terminus-github-actions@v1
         with:
           pantheon-machine-token: ${{ env.TERMINUS_TOKEN }}
-      - name: Authenticate Terminus
-        run: terminus auth:login --machine-token="$TERMINUS_TOKEN"
       ###########################################################################################################################
       - name: Setup SSH
         run: |
@@ -87,9 +85,6 @@ jobs:
           echo "  Hostname pantheon.voya.com" >> ~/.ssh/config
           echo "Host *.drush.in" >> ~/.ssh/config
           echo "  ProxyJump bastion" >> ~/.ssh/config
-      - name: Test SSH
-        run: |
-          ssh -vvv -p 2222 dave@appserver.intg.c7f7766a-f5d8-43fe-ad0f-93d1779375b7.drush.in
       ###########################################################################################################################
       - name: 'Push code to Pantheon'
         env:
